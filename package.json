@@ -1,0 +1,15 @@
+{
+  "name": "directfeedback-mcp",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "DirectFeedback MCP 서버 — 미해결 코멘트를 Claude Code 에 노출",
+  "bin": { "directfeedback-mcp": "index.mjs" },
+  "scripts": {
+    "start": "node index.mjs"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "zod": "^3.23.0"
+  }
+}
