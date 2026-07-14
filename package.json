@@ -1,10 +1,17 @@
 {
-  "name": "directfeedback-mcp",
-  "version": "0.1.0",
-  "private": true,
+  "name": "@polym-team/directfeedback-mcp",
+  "version": "0.2.0",
   "type": "module",
-  "description": "DirectFeedback MCP 서버 — 미해결 코멘트를 Claude Code 에 노출",
+  "description": "DirectFeedback MCP 서버 — 미해결 코멘트를 Claude Code 에 노출 (OAuth 2.1 PKCE)",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/polym-team/directfeedback-mcp.git"
+  },
   "bin": { "directfeedback-mcp": "index.mjs" },
+  "files": ["index.mjs", "README.md"],
+  "engines": { "node": ">=18" },
+  "publishConfig": { "access": "public" },
   "scripts": {
     "start": "node index.mjs"
   },
