@@ -1,55 +1,39 @@
-# DirectFeedback MCP
+# @polym-team/directfeedback-mcp
 
-DirectFeedback 백엔드의 **미해결 코멘트**를 Claude Code(및 MCP 지원 에이전트)에 노출하는
-stdio MCP 서버. 에이전트가 "어느 화면(story)의 어느 엘리먼트에 무슨 피드백이 있는지"를
-조회 → 소스 컴포넌트를 찾아 고치고 → 해결 처리하는 루프를 만든다.
+**Storybook에 남긴 UI 피드백을 Claude가 직접 읽고 고치게 해주는 MCP 서버입니다.**
 
-> DirectFeedback = Chrome 확장(캡처) + 백엔드(polymorph `apps/direct-feedback`) + 이 MCP.
-> 설계: `polymorph-app/docs/directfeedback-design.md`.
+DirectFeedback으로 스토리북 화면의 특정 엘리먼트에 코멘트를 남기면, Claude가
+그 코멘트를 조회해서 → 해당 컴포넌트 소스를 찾아 수정하고 → 코멘트를 해결 처리하는
+흐름을 만들 수 있습니다.
 
-## 인증 (OAuth 2.1 + PKCE)
+> **지금 지원 범위**
+> - 대상: **Storybook** (스토리 화면에 남긴 피드백)
+> - 클라이언트: **Claude / Claude Code** (MCP)
+>
+> 다른 사이트·에이전트 지원은 이후 확장 예정입니다.
 
-이 MCP 는 **어떤 비밀값도 보관하지 않는다.** oauth-server(`oauth.polymorph.co.kr`)에
-Authorization Code + PKCE(루프백 리다이렉트)로 로그인해 **본인 계정의 스코프 제한 토큰**을 받는다.
+## 시작하기
+
+### 1. 로그인 (최초 1회)
 
 ```bash
-# 최초 1회: 브라우저 로그인 → 토큰을 ~/.config/directfeedback-mcp/tokens.json 에 저장
 npx @polym-team/directfeedback-mcp login
-
-# 로그아웃 (refresh token 폐기 + 로컬 토큰 삭제)
-npx @polym-team/directfeedback-mcp logout
 ```
 
-이후 MCP 서버는 저장된 access token 을 쓰고, 만료되면 refresh token 으로 **자동 갱신**한다.
-refresh token 은 회전(rotation)되며, 탈취로 재사용이 감지되면 세션 전체가 폐기된다.
+브라우저가 열리면 Polymorph 통합 계정(구글/카카오)으로 로그인하세요. 로그인 정보는
+`~/.config/directfeedback-mcp/tokens.json`에 안전하게 저장되고, 이후 자동으로 갱신됩니다.
+(별도의 API 키나 토큰을 직접 넣을 필요가 없습니다.)
 
-## 도구(tools)
+> 피드백을 보려면 해당 피드백 **그룹의 멤버**여야 합니다. 그룹 초대는 DirectFeedback
+> 관리자에게 문의하세요.
 
-| tool | 설명 |
-|---|---|
-| `list_unresolved_comments({ groupId?, urlKey? })` | 내 그룹의 OPEN 코멘트를 URL(urlKey)·selector·태그/클래스·본문과 함께 반환. Storybook 은 urlKey 가 story id 라 소스 grep 에 사용. |
-| `resolve_comment({ id })` | 코멘트를 RESOLVED 로 표시(수정 완료 후). |
-| `add_reply({ id, body })` | 코멘트에 답글(진행상황/질문). |
-
-## 환경변수
-
-| 변수 | 설명 |
-|---|---|
-| `DIRECTFEEDBACK_API` | 백엔드 base URL (기본 `https://directfeedback.polymorph.co.kr`) |
-| `OAUTH_ISSUER` | oauth-server base URL (기본 `https://oauth.polymorph.co.kr`) |
-
-> 로컬 백엔드로 붙일 땐 `DIRECTFEEDBACK_API=http://localhost:3008`,
-> `OAUTH_ISSUER=http://localhost:3007` 로 지정.
-
-## Claude Code 연결
-
-먼저 `npx @polym-team/directfeedback-mcp login` 으로 로그인한 뒤:
+### 2. Claude Code에 연결
 
 ```bash
 claude mcp add directfeedback -- npx -y @polym-team/directfeedback-mcp
 ```
 
-또는 프로젝트 `.mcp.json`:
+또는 프로젝트 `.mcp.json`에 직접:
 
 ```json
 {
@@ -62,12 +46,46 @@ claude mcp add directfeedback -- npx -y @polym-team/directfeedback-mcp
 }
 ```
 
-> 비밀값이 없으므로 `.mcp.json` 을 커밋해도 안전하다.
+비밀값이 들어가지 않으므로 `.mcp.json`을 저장소에 커밋해도 됩니다.
 
-## 사용 흐름 (에이전트)
+### 3. 사용
 
-1. `list_unresolved_comments` → 미해결 목록 확보 (각 항목에 urlKey=story id + selector + body).
-2. urlKey(story id)로 저장소에서 스토리/컴포넌트 소스를 grep → 해당 엘리먼트 수정.
-3. `resolve_comment({ id })` 로 완료 표시 (또는 `add_reply` 로 회신).
+Claude Code에서 이렇게 요청하면 됩니다:
 
-> "로그인이 필요합니다" 오류가 나면 `npx @polym-team/directfeedback-mcp login` 을 다시 실행.
+> "미해결 피드백 확인하고 하나씩 고쳐줘"
+
+Claude가 미해결 코멘트를 조회해서, 각 코멘트의 스토리(urlKey)와 엘리먼트 정보로
+소스를 찾아 수정하고, 완료되면 코멘트를 해결 처리합니다.
+
+## 제공 도구
+
+| 도구 | 설명 |
+|---|---|
+| `list_unresolved_comments` | 내 그룹의 미해결(OPEN) 코멘트를 스토리·엘리먼트·본문과 함께 조회 |
+| `resolve_comment` | 코멘트를 해결됨으로 표시 |
+| `add_reply` | 코멘트에 답글 작성 |
+
+## 로그아웃
+
+```bash
+npx @polym-team/directfeedback-mcp logout
+```
+
+## 문제 해결
+
+- **"로그인이 필요합니다"가 나와요** → `npx @polym-team/directfeedback-mcp login`을 다시 실행하세요.
+- **코멘트가 안 보여요** → 로그인한 계정이 해당 피드백 그룹의 멤버인지 확인하세요.
+- **브라우저가 자동으로 안 열려요** → 터미널에 출력된 URL을 직접 열어 로그인하세요.
+
+## 고급 설정 (선택)
+
+기본값은 Polymorph 프로덕션을 가리킵니다. 로컬/자체 백엔드로 붙일 때만 환경변수로 바꿉니다.
+
+| 변수 | 기본값 |
+|---|---|
+| `DIRECTFEEDBACK_API` | `https://directfeedback.polymorph.co.kr` |
+| `OAUTH_ISSUER` | `https://oauth.polymorph.co.kr` |
+
+## 요구 사항
+
+- Node.js 18 이상
