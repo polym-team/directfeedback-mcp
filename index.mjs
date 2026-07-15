@@ -343,6 +343,74 @@ async function startServer() {
     },
   );
 
+  server.registerTool(
+    'create_comment',
+    {
+      title: '스토리에 코멘트 생성',
+      description:
+        'Storybook 스토리에 새 피드백 코멘트를 남긴다. 용도: 디자이너/리뷰어에게 "이 스토리의 이 점을 ' +
+        '확인·수정해달라"는 역방향 요청이나 확인 노트. ⚠️ 이 도구는 코드를 고치지 않는다 — 수정은 소스를 ' +
+        '직접 편집하는 것이고, 이건 사람에게 남기는 메모다. 기본은 스토리 레벨 코멘트이며, 특정 엘리먼트를 ' +
+        '가리키려면 cssPath를 함께 준다. 한 코멘트에 이슈 하나만 담고, 명확하고 실행 가능하게 작성하며 ' +
+        '같은 내용을 중복 생성하지 말 것. 생성 전 본문을 사용자에게 확인받는 것을 권장한다.',
+      inputSchema: {
+        urlKey: z
+          .string()
+          .describe(
+            '대상 Storybook 스토리 id. 형식 "<kebab-경로>--<variant>" 예 "pages-mediacontents-mobile--default". ' +
+              '스토리 소스(제목/파일 경로)에서 도출하거나 list_unresolved_comments 결과의 urlKey를 참고.',
+          ),
+        body: z
+          .string()
+          .describe('리뷰어가 읽을 피드백 본문. 무엇을·왜를 명확하고 실행 가능하게, 프로젝트 언어(한국어)로.'),
+        groupId: z
+          .string()
+          .optional()
+          .describe(
+            '대상 그룹 id. 그룹이 하나뿐이면 생략 시 자동 선택되고, 둘 이상이면 반드시 지정(임의 선택 금지).',
+          ),
+        cssPath: z
+          .string()
+          .optional()
+          .describe(
+            '(선택) 특정 엘리먼트 CSS 선택자. 컴포넌트 소스에서 확인되는 data-testid나 안정 클래스 기반의 ' +
+              '확실한 선택자만 사용. 렌더된 DOM을 확신할 수 없으면 생략(스토리 레벨). 추측 selector 금지 — ' +
+              '틀린 앵커보다 앵커 없음이 낫다.',
+          ),
+        tagName: z
+          .string()
+          .optional()
+          .describe('(선택) cssPath 대상 태그명(소문자). cssPath를 줄 때 함께.'),
+      },
+    },
+    async ({ urlKey, body, groupId, cssPath, tagName }) => {
+      try {
+        let gid = groupId;
+        if (!gid) {
+          const groups = (await api('/api/groups')).groups || [];
+          if (groups.length === 0) throw new Error('속한 그룹이 없습니다.');
+          if (groups.length > 1) {
+            throw new Error(
+              '그룹이 여러 개입니다. groupId를 지정하세요: ' +
+                groups.map((g) => `${g.name}(${g.id})`).join(', '),
+            );
+          }
+          gid = groups[0].id;
+        }
+        const payload = { groupId: gid, urlKey, body };
+        if (cssPath) payload.cssPath = cssPath;
+        if (tagName) payload.tagName = tagName;
+        const r = await api('/api/comments', {
+          method: 'POST',
+          body: JSON.stringify(payload),
+        });
+        return ok({ created: r.comment?.id, urlKey, anchored: !!cssPath });
+      } catch (e) {
+        return fail(e);
+      }
+    },
+  );
+
   await server.connect(new StdioServerTransport());
 }
 

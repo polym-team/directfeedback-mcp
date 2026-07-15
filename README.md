@@ -64,6 +64,7 @@ Claude가 미해결 코멘트를 조회해서, 각 코멘트의 스토리(urlKey
 | `list_unresolved_comments` | 내 그룹의 미해결(OPEN) 코멘트를 스토리·엘리먼트·본문과 함께 조회 |
 | `resolve_comment` | 코멘트를 해결됨으로 표시 |
 | `add_reply` | 코멘트에 답글 작성 |
+| `create_comment` | 스토리에 새 코멘트 생성(역방향 피드백/노트). 기본은 스토리 레벨, `cssPath`로 특정 엘리먼트 지정 가능 |
 
 ## 로그아웃
 
