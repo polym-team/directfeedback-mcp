@@ -29,11 +29,20 @@ npx @polym-team/directfeedback-mcp login
 
 ### 2. Claude Code에 연결
 
+**모든 프로젝트에서 쓰려면 `user` 스코프로 등록하세요** (권장):
+
 ```bash
-claude mcp add directfeedback -- npx -y @polym-team/directfeedback-mcp
+claude mcp add -s user directfeedback -- npx -y @polym-team/directfeedback-mcp
 ```
 
-또는 프로젝트 `.mcp.json`에 직접:
+> ⚠️ `-s user`를 빼면 기본 스코프가 `local`이라 **명령을 실행한 그 디렉토리에서만** MCP가
+> 잡힙니다. 다른 프로젝트 폴더에서 Claude Code를 열면 도구가 안 보이게 됩니다.
+> 어느 폴더에서 실행하든 `-s user`면 전역으로 등록됩니다.
+> (로그인 토큰은 `~/.config/directfeedback-mcp/tokens.json`에 저장되어 이미 전역이므로,
+> 등록만 user 스코프로 하면 됩니다. login은 폴더 상관없이 한 번만 하면 됩니다.)
+
+특정 프로젝트에서 팀과 공유하려면 그 프로젝트의 `.mcp.json`에 직접 넣어 커밋해도 됩니다
+(비밀값이 없어 안전):
 
 ```json
 {
@@ -45,8 +54,6 @@ claude mcp add directfeedback -- npx -y @polym-team/directfeedback-mcp
   }
 }
 ```
-
-비밀값이 들어가지 않으므로 `.mcp.json`을 저장소에 커밋해도 됩니다.
 
 ### 3. 사용
 
@@ -72,8 +79,33 @@ Claude가 미해결 코멘트를 조회해서, 각 코멘트의 스토리(urlKey
 npx @polym-team/directfeedback-mcp logout
 ```
 
+## 완전 삭제 후 재설치
+
+꼬였을 때(스코프 실수, 토큰 문제 등)는 아래로 깨끗이 지우고 다시 설치하세요.
+
+```bash
+# 1) 로그아웃 — refresh token 폐기 + 로컬 토큰 파일 삭제
+npx @polym-team/directfeedback-mcp logout
+
+# 2) MCP 등록 해제 — 등록했던 스코프에 맞춰 실행 (user로 넣었으면 -s user)
+claude mcp remove -s user directfeedback
+#   local 스코프로 넣었던 경우: 해당 프로젝트 폴더에서
+#   claude mcp remove directfeedback
+
+# 3) 혹시 남은 토큰/캐시 수동 삭제 (선택)
+rm -rf ~/.config/directfeedback-mcp
+
+# 4) 다시 설치
+npx @polym-team/directfeedback-mcp login
+claude mcp add -s user directfeedback -- npx -y @polym-team/directfeedback-mcp
+```
+
+> 여러 스코프에 중복 등록했는지 확인: `claude mcp list`
+
 ## 문제 해결
 
+- **어떤 폴더에서는 도구가 안 보여요** → `local` 스코프로 등록된 겁니다. `-s user`로 다시 등록하세요
+  (`claude mcp list`로 확인). 로그인은 전역이라 다시 할 필요 없습니다.
 - **"로그인이 필요합니다"가 나와요** → `npx @polym-team/directfeedback-mcp login`을 다시 실행하세요.
 - **코멘트가 안 보여요** → 로그인한 계정이 해당 피드백 그룹의 멤버인지 확인하세요.
 - **브라우저가 자동으로 안 열려요** → 터미널에 출력된 URL을 직접 열어 로그인하세요.
