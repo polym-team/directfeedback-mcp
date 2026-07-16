@@ -420,6 +420,50 @@ async function startServer() {
     },
   );
 
+  server.registerTool(
+    'get_tobe',
+    {
+      title: '스토리의 To-Be 변경 조회',
+      description:
+        '디자이너가 특정 Storybook 스토리에 그린 To-Be(원본 대비 변경)를 구조화해 반환한다. ' +
+        '각 변경은 {selector, kind(style|text|class), property?, from, to} 형태 — 이걸 읽어 해당 컴포넌트 소스에 반영하면 된다. ' +
+        'version 은 캡처된 스토리북 빌드(버전/브랜치/빌드번호)라 "그 빌드 기준" 변경임을 알 수 있다. ' +
+        '변경이 없으면 changeCount 0. (참고: kind=style 은 인라인 오버라이드이니 소스에선 해당 selector에 그 속성을 반영)',
+      inputSchema: {
+        urlKey: z
+          .string()
+          .describe(
+            '대상 Storybook 스토리 id (예: "components-channelview-channelsubscribecard--default"). ' +
+              'list_unresolved_comments 결과의 urlKey 참고.',
+          ),
+        groupId: z
+          .string()
+          .optional()
+          .describe('그룹이 하나뿐이면 생략, 둘 이상이면 지정(임의 선택 금지).'),
+      },
+    },
+    async ({ urlKey, groupId }) => {
+      try {
+        let gid = groupId;
+        if (!gid) {
+          const groups = (await api('/api/groups')).groups || [];
+          if (groups.length === 0) throw new Error('속한 그룹이 없습니다.');
+          if (groups.length > 1) {
+            throw new Error(
+              '그룹이 여러 개입니다. groupId를 지정하세요: ' +
+                groups.map((g) => `${g.name}(${g.id})`).join(', '),
+            );
+          }
+          gid = groups[0].id;
+        }
+        const qs = new URLSearchParams({ groupId: gid, urlKey });
+        return ok(await api(`/api/snapshots/diff?${qs.toString()}`));
+      } catch (e) {
+        return fail(e);
+      }
+    },
+  );
+
   await server.connect(new StdioServerTransport());
 }
 

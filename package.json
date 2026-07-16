@@ -1,6 +1,6 @@
 {
   "name": "@polym-team/directfeedback-mcp",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "type": "module",
   "description": "DirectFeedback MCP 서버 — 미해결 코멘트를 Claude Code 에 노출 (OAuth 2.1 PKCE)",
   "license": "MIT",
