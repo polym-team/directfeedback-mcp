@@ -1,0 +1,24 @@
+name: Deprecate on npm
+
+# 수동 실행(workflow_dispatch)으로 npm deprecate. CI의 NPM_TOKEN(2FA 우회)을 사용하므로
+# 로컬 npm login/OTP 없이 처리된다.
+on:
+  workflow_dispatch:
+    inputs:
+      message:
+        description: 'deprecate 메시지'
+        required: true
+        default: 'DEPRECATED: 원격 HTTP MCP로 이전했습니다. 설치 없이 claude mcp add --transport http -s user directfeedback https://directfeedback.polymorph.co.kr/api/mcp --client-id direct-feedback 로 연결하세요. 가이드: https://directfeedback.polymorph.co.kr/guide'
+
+jobs:
+  deprecate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: 'https://registry.npmjs.org'
+      - name: Deprecate
+        run: npm deprecate @polym-team/directfeedback-mcp "${{ inputs.message }}"
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
