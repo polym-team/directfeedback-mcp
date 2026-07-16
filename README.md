@@ -1,5 +1,15 @@
 # @polym-team/directfeedback-mcp
 
+> ## ⚠️ DEPRECATED — 원격 MCP로 이전되었습니다
+> 이 로컬(stdio/npm) 서버는 더 이상 필요 없습니다. 설치·토큰 파일 없이 **원격 HTTP MCP**로 연결하세요:
+> ```bash
+> claude mcp remove directfeedback
+> claude mcp add --transport http -s user directfeedback \
+>   https://directfeedback.polymorph.co.kr/api/mcp --client-id direct-feedback
+> claude mcp login directfeedback
+> ```
+> 가이드: https://directfeedback.polymorph.co.kr/guide
+
 **Storybook에 남긴 UI 피드백을 Claude가 직접 읽고 고치게 해주는 MCP 서버입니다.**
 
 DirectFeedback으로 스토리북 화면의 특정 엘리먼트에 코멘트를 남기면, Claude가
