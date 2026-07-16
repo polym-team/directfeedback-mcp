@@ -464,6 +464,47 @@ async function startServer() {
     },
   );
 
+  server.registerTool(
+    'resolve_tobe',
+    {
+      title: 'To-Be 완료 처리',
+      description:
+        '스토리의 진행 중(OPEN) To-Be 스냅샷을 완료 처리한다(디자인 피드백을 소스에 반영한 뒤). ' +
+        '완료하면 그 스토리에서 디자이너가 새 스냅샷을 다시 만들 수 있다. get_tobe로 변경을 확인·반영한 후에 호출할 것.',
+      inputSchema: {
+        urlKey: z.string().describe('대상 Storybook 스토리 id.'),
+        groupId: z.string().optional().describe('그룹이 하나뿐이면 생략, 둘 이상이면 지정.'),
+      },
+    },
+    async ({ urlKey, groupId }) => {
+      try {
+        let gid = groupId;
+        if (!gid) {
+          const groups = (await api('/api/groups')).groups || [];
+          if (groups.length === 0) throw new Error('속한 그룹이 없습니다.');
+          if (groups.length > 1) {
+            throw new Error(
+              '그룹이 여러 개입니다. groupId를 지정하세요: ' +
+                groups.map((g) => `${g.name}(${g.id})`).join(', '),
+            );
+          }
+          gid = groups[0].id;
+        }
+        const found = await api(
+          `/api/snapshots?${new URLSearchParams({ groupId: gid, urlKey }).toString()}`,
+        );
+        if (!found || !found.snapshot) throw new Error('진행 중인 To-Be 스냅샷이 없습니다.');
+        const r = await api(`/api/snapshots/${found.snapshot.id}`, {
+          method: 'PATCH',
+          body: JSON.stringify({ status: 'RESOLVED' }),
+        });
+        return ok({ resolved: r.snapshot?.id, status: r.snapshot?.status });
+      } catch (e) {
+        return fail(e);
+      }
+    },
+  );
+
   await server.connect(new StdioServerTransport());
 }
 

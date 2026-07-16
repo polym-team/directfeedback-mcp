@@ -73,6 +73,7 @@ Claude가 미해결 코멘트를 조회해서, 각 코멘트의 스토리(urlKey
 | `add_reply` | 코멘트에 답글 작성 |
 | `create_comment` | 스토리에 새 코멘트 생성(역방향 피드백/노트). `urlKey`·`body`·`pageUrl`(버전/빌드 추적용 정확한 스토리북 URL) 필수, `cssPath`로 특정 엘리먼트 지정 가능 |
 | `get_tobe` | 스토리의 To-Be(디자이너가 그린 원본 대비 변경)를 `{selector, kind, property, from, to}` 목록 + 스토리북 버전으로 반환. 소스에 반영하는 데 사용 |
+| `resolve_tobe` | 반영 후 그 스토리의 진행 중 To-Be를 완료 처리(디자이너가 새 스냅샷을 다시 만들 수 있게) |
 
 ## 로그아웃
 
