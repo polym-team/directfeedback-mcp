@@ -108,6 +108,14 @@ claude mcp add -s user directfeedback -- npx -y @polym-team/directfeedback-mcp
 
 - **어떤 폴더에서는 도구가 안 보여요** → `local` 스코프로 등록된 겁니다. `-s user`로 다시 등록하세요
   (`claude mcp list`로 확인). 로그인은 전역이라 다시 할 필요 없습니다.
+- **`npm error EOVERRIDE` / npx 실행이 프로젝트 npm 설정과 충돌해요** → 그 프로젝트 package.json 의
+  `overrides` 등이 npx 설치를 막는 경우입니다. **전역 설치로 우회**하세요(프로젝트 무관):
+  ```bash
+  npm i -g @polym-team/directfeedback-mcp
+  directfeedback-mcp login
+  claude mcp add -s user directfeedback -- directfeedback-mcp
+  ```
+  또는 로그인만 홈에서: `cd ~ && npx @polym-team/directfeedback-mcp login`.
 - **"로그인이 필요합니다"가 나와요** → `npx @polym-team/directfeedback-mcp login`을 다시 실행하세요.
 - **코멘트가 안 보여요** → 로그인한 계정이 해당 피드백 그룹의 멤버인지 확인하세요.
 - **브라우저가 자동으로 안 열려요** → 터미널에 출력된 URL을 직접 열어 로그인하세요.
