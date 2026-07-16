@@ -351,7 +351,8 @@ async function startServer() {
         'Storybook 스토리에 새 피드백 코멘트를 남긴다. 용도: 디자이너/리뷰어에게 "이 스토리의 이 점을 ' +
         '확인·수정해달라"는 역방향 요청이나 확인 노트. ⚠️ 이 도구는 코드를 고치지 않는다 — 수정은 소스를 ' +
         '직접 편집하는 것이고, 이건 사람에게 남기는 메모다. 기본은 스토리 레벨 코멘트이며, 특정 엘리먼트를 ' +
-        '가리키려면 cssPath를 함께 준다. 한 코멘트에 이슈 하나만 담고, 명확하고 실행 가능하게 작성하며 ' +
+        '가리키려면 cssPath를 함께 준다. urlKey·body·pageUrl은 필수(pageUrl은 버전/빌드 추적용 정확한 주소). ' +
+        '한 코멘트에 이슈 하나만 담고, 명확하고 실행 가능하게 작성하며 ' +
         '같은 내용을 중복 생성하지 말 것. 생성 전 본문을 사용자에게 확인받는 것을 권장한다.',
       inputSchema: {
         urlKey: z
@@ -383,10 +384,11 @@ async function startServer() {
           .describe('(선택) cssPath 대상 태그명(소문자). cssPath를 줄 때 함께.'),
         pageUrl: z
           .string()
-          .optional()
           .describe(
-            '(선택) 관련 Storybook URL. 넣으면 "내 코멘트" 페이지에서 스토리북 열기 링크로 노출된다. ' +
-              '예 "http://localhost:6006/?path=/story/pages-mediacontents-mobile--default". 확실할 때만.',
+            '필수. 코멘트 대상 스토리의 정확한 Storybook URL — 버전/브랜치/빌드번호가 담긴 실제 주소를 그대로 기록한다. ' +
+              '이래야 나중에 "그 빌드에서 이미 고쳐졌는지" 추적이 된다. 보통 "<스토리북 base>?path=/story/<urlKey>" 형태. ' +
+              '예 "https://host/.../2.2.2-<branch>/16/index.html?path=/story/components-foo--default". ' +
+              '사용자가 준 스토리북 주소나 현재 보고 있는 스토리북 URL을 사용하고, 모르면 사용자에게 물어볼 것.',
           ),
       },
     },
@@ -404,10 +406,9 @@ async function startServer() {
           }
           gid = groups[0].id;
         }
-        const payload = { groupId: gid, urlKey, body };
+        const payload = { groupId: gid, urlKey, body, pageUrl };
         if (cssPath) payload.cssPath = cssPath;
         if (tagName) payload.tagName = tagName;
-        if (pageUrl) payload.pageUrl = pageUrl;
         const r = await api('/api/comments', {
           method: 'POST',
           body: JSON.stringify(payload),
