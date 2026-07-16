@@ -381,9 +381,16 @@ async function startServer() {
           .string()
           .optional()
           .describe('(선택) cssPath 대상 태그명(소문자). cssPath를 줄 때 함께.'),
+        pageUrl: z
+          .string()
+          .optional()
+          .describe(
+            '(선택) 관련 Storybook URL. 넣으면 "내 코멘트" 페이지에서 스토리북 열기 링크로 노출된다. ' +
+              '예 "http://localhost:6006/?path=/story/pages-mediacontents-mobile--default". 확실할 때만.',
+          ),
       },
     },
-    async ({ urlKey, body, groupId, cssPath, tagName }) => {
+    async ({ urlKey, body, groupId, cssPath, tagName, pageUrl }) => {
       try {
         let gid = groupId;
         if (!gid) {
@@ -400,6 +407,7 @@ async function startServer() {
         const payload = { groupId: gid, urlKey, body };
         if (cssPath) payload.cssPath = cssPath;
         if (tagName) payload.tagName = tagName;
+        if (pageUrl) payload.pageUrl = pageUrl;
         const r = await api('/api/comments', {
           method: 'POST',
           body: JSON.stringify(payload),
